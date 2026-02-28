@@ -6,6 +6,10 @@
     <title>Simulador de Lógica: Ranas Saltarinas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+
         /* Transiciones suaves para el movimiento de las piezas */
         .frog-transition {
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -19,79 +23,74 @@
 
         .frog-green { filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.5)); }
         .frog-brown { filter: sepia(0.8) saturate(3) hue-rotate(330deg) drop-shadow(0 0 8px rgba(120, 53, 15, 0.5)); }
+
+        /* Animación para el mensaje de victoria */
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .victory-anim { animation: celebrate 2s ease-in-out infinite; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-6 font-sans">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-3 sm:p-6">
 
-    <div class="max-w-4xl w-full bg-slate-800 p-10 rounded-3xl shadow-2xl border border-slate-700">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl font-extrabold text-emerald-400 mb-4 tracking-tight">Desafío de las Ranas Saltarinas</h1>
-            <p class="text-slate-400 max-w-lg mx-auto">
-                Intercambiá las posiciones iniciales utilizando movimientos contiguos o saltos de una sola pieza.
+    <div class="w-full max-w-4xl bg-slate-800 p-5 sm:p-10 rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-700">
+        <header class="text-center mb-6 sm:mb-10">
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-emerald-400 mb-2 sm:mb-4 tracking-tight">Ranas Saltarinas</h1>
+            <p class="text-slate-400 text-xs sm:text-base max-w-lg mx-auto">
+                Intercambiá las posiciones iniciales mediante saltos o movimientos contiguos.
             </p>
         </header>
 
-        <!-- Tablero de Juego -->
-        <div id="game-container" class="relative bg-emerald-950/40 p-8 rounded-2xl border border-emerald-900/50 mb-10">
-            <div id="board" class="flex justify-around items-center gap-2 md:gap-4 h-24">
+        <!-- Tablero de Juego Responsivo -->
+        <div id="game-container" class="relative bg-emerald-950/40 p-3 sm:p-8 rounded-xl sm:rounded-2xl border border-emerald-900/50 mb-6 sm:mb-10">
+            <div id="board" class="flex justify-between items-center gap-1 sm:gap-4 h-20 sm:h-28">
                 <!-- Los slots se generan dinámicamente -->
             </div>
         </div>
 
         <!-- Panel de Control e Información -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             <!-- Estadísticas y Estado -->
-            <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
-                <h3 class="text-emerald-400 font-bold uppercase text-xs tracking-widest mb-4">Estado del Sistema</h3>
-                <div class="space-y-4">
-                    <div class="flex justify-between">
-                        <span class="text-slate-500">Movimientos:</span>
-                        <span id="move-count" class="font-mono text-xl text-white">0</span>
+            <div class="bg-slate-900/50 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-700">
+                <h3 class="text-emerald-400 font-bold uppercase text-[10px] sm:text-xs tracking-widest mb-3">Progreso</h3>
+                <div class="space-y-2 sm:space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500 text-sm">Movimientos:</span>
+                        <span id="move-count" class="font-mono text-xl sm:text-2xl text-white font-bold">0</span>
                     </div>
-                    <div id="status-msg" class="text-sm font-medium text-yellow-500 min-h-[1.25rem]"></div>
+                    <div id="status-msg" class="text-xs sm:text-sm font-medium text-yellow-500 min-h-[1.25rem] italic"></div>
                 </div>
             </div>
 
-            <!-- Reglas Lógicas -->
-            <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700 col-span-1 lg:col-span-2">
-                <h3 class="text-emerald-400 font-bold uppercase text-xs tracking-widest mb-4">Reglas de Movimiento</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-400">
-                    <div class="flex items-start gap-2">
-                        <span class="text-emerald-500">●</span>
-                        <p>Las ranas verdes solo avanzan hacia la derecha.</p>
-                    </div>
-                    <div class="flex items-start gap-2">
-                        <span class="text-emerald-500">●</span>
-                        <p>Las ranas café solo avanzan hacia la izquierda.</p>
-                    </div>
-                    <div class="flex items-start gap-2">
-                        <span class="text-emerald-500">●</span>
-                        <p>Se puede saltar a un espacio vacío contiguo.</p>
-                    </div>
-                    <div class="flex items-start gap-2">
-                        <span class="text-emerald-500">●</span>
-                        <p>Se puede saltar sobre una sola rana opuesta.</p>
-                    </div>
+            <!-- Reglas Lógicas Adaptadas -->
+            <div class="bg-slate-900/50 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-700 md:col-span-1 lg:col-span-2">
+                <h3 class="text-emerald-400 font-bold uppercase text-[10px] sm:text-xs tracking-widest mb-3">Reglas</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-[10px] sm:text-xs text-slate-400">
+                    <p>🟢 Verdes: avanzan solo a la derecha.</p>
+                    <p>🟤 Café: avanzan solo a la izquierda.</p>
+                    <p>● Salto simple a espacio vacío contiguo.</p>
+                    <p>● Salto doble sobre una rana opuesta.</p>
                 </div>
             </div>
         </div>
 
         <!-- Botones de Acción -->
-        <div class="mt-10 flex flex-wrap justify-center gap-4">
-            <button onclick="resetGame()" class="bg-slate-700 hover:bg-slate-600 text-white px-8 py-3 rounded-xl font-bold transition-all transform active:scale-95 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+        <div class="mt-6 sm:mt-10 flex justify-center">
+            <button onclick="resetGame()" class="w-full sm:w-auto bg-slate-700 hover:bg-slate-600 text-white px-8 py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
                 Reiniciar Simulación
             </button>
         </div>
     </div>
 
-    <!-- Modal de Victoria -->
-    <div id="victory-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-slate-800 border-2 border-emerald-500 p-10 rounded-3xl max-w-md w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.3)]">
-            <div class="text-6xl mb-4">🏆</div>
-            <h2 class="text-3xl font-bold text-white mb-2">¡Desafío Completado!</h2>
-            <p class="text-slate-400 mb-8">Has logrado el intercambio de posiciones exitosamente.</p>
-            <button onclick="resetGame()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-bold text-lg transition-colors">
+    <!-- Modal de Victoria Responsivo -->
+    <div id="victory-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden flex items-center justify-center z-50 p-6">
+        <div class="bg-slate-800 border-2 border-emerald-500 p-8 sm:p-12 rounded-3xl max-w-sm w-full text-center shadow-2xl victory-anim">
+            <div class="text-5xl sm:text-7xl mb-4 sm:mb-6">🏆</div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">¡Logrado!</h2>
+            <p class="text-slate-400 text-sm sm:text-base mb-8">Has completado el intercambio con éxito.</p>
+            <button onclick="resetGame()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl font-bold text-lg transition-all active:scale-95 shadow-lg">
                 Jugar de nuevo
             </button>
         </div>
@@ -100,10 +99,9 @@
     <script>
         /**
          * Lógica del Juego de las Ranas Saltarinas
-         * Implementada para propósitos educativos (UTU)
+         * Optimizado para dispositivos móviles y escritorio
          */
 
-        // Estado inicial: 3 Verdes (G), Espacio (E), 3 Café (B)
         let gameState = ['G', 'G', 'G', 'E', 'B', 'B', 'B'];
         const winState = ['B', 'B', 'B', 'E', 'G', 'G', 'G'];
         let moves = 0;
@@ -113,19 +111,18 @@
         const statusMsgEl = document.getElementById('status-msg');
         const victoryModal = document.getElementById('victory-modal');
 
-        /**
-         * Inicializa y renderiza el tablero basado en el arreglo de estado
-         */
         function renderBoard() {
             boardEl.innerHTML = '';
             
             gameState.forEach((cell, index) => {
                 const slot = document.createElement('div');
-                slot.className = 'pad-slot w-12 h-12 md:w-20 md:h-20 rounded-full flex items-center justify-center relative transition-colors duration-300';
+                // Sizing responsivo para los nenúfares
+                slot.className = 'pad-slot w-10 h-10 sm:w-16 md:w-20 sm:h-16 md:h-20 rounded-full flex items-center justify-center relative transition-colors duration-300';
                 
                 if (cell !== 'E') {
                     const frog = document.createElement('div');
-                    frog.className = `frog-transition w-10 h-10 md:w-16 md:h-16 flex items-center justify-center text-3xl md:text-5xl cursor-pointer select-none hover:scale-110 active:scale-90`;
+                    // Sizing responsivo para las ranas
+                    frog.className = `frog-transition w-8 h-8 sm:w-14 sm:h-14 flex items-center justify-center text-2xl sm:text-4xl md:text-5xl cursor-pointer select-none hover:scale-110 active:scale-90`;
                     frog.innerHTML = '🐸';
                     
                     if (cell === 'G') {
@@ -147,23 +144,17 @@
             checkGameState();
         }
 
-        /**
-         * Intenta realizar un movimiento basado en las reglas del juego
-         * @param {number} index - Posición de la pieza que se desea mover
-         */
         function attemptMove(index) {
             const piece = gameState[index];
             const emptyIdx = gameState.indexOf('E');
             let success = false;
 
             if (piece === 'G') {
-                // Verde: puede mover a +1 o saltar a +2
                 if (emptyIdx === index + 1 || (emptyIdx === index + 2 && gameState[index + 1] === 'B')) {
                     executeSwap(index, emptyIdx);
                     success = true;
                 }
             } else if (piece === 'B') {
-                // Café: puede mover a -1 o saltar a -2
                 if (emptyIdx === index - 1 || (emptyIdx === index - 2 && gameState[index - 1] === 'G')) {
                     executeSwap(index, emptyIdx);
                     success = true;
@@ -171,13 +162,10 @@
             }
 
             if (!success) {
-                flashError("Movimiento inválido según las reglas.");
+                flashError("Movimiento no permitido.");
             }
         }
 
-        /**
-         * Intercambia las posiciones en el arreglo de estado
-         */
         function executeSwap(from, to) {
             const temp = gameState[from];
             gameState[from] = gameState[to];
@@ -186,30 +174,24 @@
             renderBoard();
         }
 
-        /**
-         * Verifica si el usuario ha ganado o si ha quedado bloqueado
-         */
         function checkGameState() {
-            // Verificar Victoria
             if (JSON.stringify(gameState) === JSON.stringify(winState)) {
                 setTimeout(() => {
                     victoryModal.classList.remove('hidden');
+                    victoryModal.style.display = 'flex';
                 }, 400);
                 return;
             }
 
-            // Verificar Bloqueo (Deadlock)
             if (!canMoveAny()) {
-                statusMsgEl.innerText = "SISTEMA BLOQUEADO: No hay movimientos posibles.";
+                statusMsgEl.innerText = "SISTEMA BLOQUEADO: Reiniciá.";
                 statusMsgEl.classList.add('text-red-500');
             } else {
                 statusMsgEl.classList.remove('text-red-500');
+                statusMsgEl.innerText = "";
             }
         }
 
-        /**
-         * Evalúa si existe al menos un movimiento legal en el tablero actual
-         */
         function canMoveAny() {
             const emptyIdx = gameState.indexOf('E');
             for (let i = 0; i < gameState.length; i++) {
@@ -222,28 +204,23 @@
             return false;
         }
 
-        /**
-         * Reinicia el estado a los valores por defecto
-         */
         function resetGame() {
             gameState = ['G', 'G', 'G', 'E', 'B', 'B', 'B'];
             moves = 0;
             statusMsgEl.innerText = "";
             victoryModal.classList.add('hidden');
+            victoryModal.style.display = 'none';
             renderBoard();
         }
 
-        /**
-         * Muestra un mensaje temporal de error
-         */
         function flashError(msg) {
             statusMsgEl.innerText = msg;
             setTimeout(() => {
                 if (statusMsgEl.innerText === msg) statusMsgEl.innerText = "";
-            }, 2000);
+            }, 1500);
         }
 
-        // Inicio de la aplicación
+        // Aseguramos el render inicial al cargar la ventana
         window.onload = renderBoard;
     </script>
 </body>
