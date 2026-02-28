@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Lógica: Ranas Saltarinas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Transiciones suaves para el movimiento de las piezas */
+        .frog-transition {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        /* Estilo para los espacios del tablero (nenúfares) */
+        .pad-slot {
+            background: rgba(15, 63, 51, 0.4);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        .frog-green { filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.5)); }
+        .frog-brown { filter: sepia(0.8) saturate(3) hue-rotate(330deg) drop-shadow(0 0 8px rgba(120, 53, 15, 0.5)); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-6 font-sans">
+
+    <div class="max-w-4xl w-full bg-slate-800 p-10 rounded-3xl shadow-2xl border border-slate-700">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-emerald-400 mb-4 tracking-tight">Desafío de las Ranas Saltarinas</h1>
+            <p class="text-slate-400 max-w-lg mx-auto">
+                Intercambiá las posiciones iniciales utilizando movimientos contiguos o saltos de una sola pieza.
+            </p>
+        </header>
+
+        <!-- Tablero de Juego -->
+        <div id="game-container" class="relative bg-emerald-950/40 p-8 rounded-2xl border border-emerald-900/50 mb-10">
+            <div id="board" class="flex justify-around items-center gap-2 md:gap-4 h-24">
+                <!-- Los slots se generan dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Panel de Control e Información -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Estadísticas y Estado -->
+            <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
+                <h3 class="text-emerald-400 font-bold uppercase text-xs tracking-widest mb-4">Estado del Sistema</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Movimientos:</span>
+                        <span id="move-count" class="font-mono text-xl text-white">0</span>
+                    </div>
+                    <div id="status-msg" class="text-sm font-medium text-yellow-500 min-h-[1.25rem]"></div>
+                </div>
+            </div>
+
+            <!-- Reglas Lógicas -->
+            <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700 col-span-1 lg:col-span-2">
+                <h3 class="text-emerald-400 font-bold uppercase text-xs tracking-widest mb-4">Reglas de Movimiento</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-400">
+                    <div class="flex items-start gap-2">
+                        <span class="text-emerald-500">●</span>
+                        <p>Las ranas verdes solo avanzan hacia la derecha.</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-emerald-500">●</span>
+                        <p>Las ranas café solo avanzan hacia la izquierda.</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-emerald-500">●</span>
+                        <p>Se puede saltar a un espacio vacío contiguo.</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-emerald-500">●</span>
+                        <p>Se puede saltar sobre una sola rana opuesta.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="mt-10 flex flex-wrap justify-center gap-4">
+            <button onclick="resetGame()" class="bg-slate-700 hover:bg-slate-600 text-white px-8 py-3 rounded-xl font-bold transition-all transform active:scale-95 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                Reiniciar Simulación
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Victoria -->
+    <div id="victory-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-800 border-2 border-emerald-500 p-10 rounded-3xl max-w-md w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.3)]">
+            <div class="text-6xl mb-4">🏆</div>
+            <h2 class="text-3xl font-bold text-white mb-2">¡Desafío Completado!</h2>
+            <p class="text-slate-400 mb-8">Has logrado el intercambio de posiciones exitosamente.</p>
+            <button onclick="resetGame()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-bold text-lg transition-colors">
+                Jugar de nuevo
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Lógica del Juego de las Ranas Saltarinas
+         * Implementada para propósitos educativos (UTU)
+         */
+
+        // Estado inicial: 3 Verdes (G), Espacio (E), 3 Café (B)
+        let gameState = ['G', 'G', 'G', 'E', 'B', 'B', 'B'];
+        const winState = ['B', 'B', 'B', 'E', 'G', 'G', 'G'];
+        let moves = 0;
+
+        const boardEl = document.getElementById('board');
+        const moveCounterEl = document.getElementById('move-count');
+        const statusMsgEl = document.getElementById('status-msg');
+        const victoryModal = document.getElementById('victory-modal');
+
+        /**
+         * Inicializa y renderiza el tablero basado en el arreglo de estado
+         */
+        function renderBoard() {
+            boardEl.innerHTML = '';
+            
+            gameState.forEach((cell, index) => {
+                const slot = document.createElement('div');
+                slot.className = 'pad-slot w-12 h-12 md:w-20 md:h-20 rounded-full flex items-center justify-center relative transition-colors duration-300';
+                
+                if (cell !== 'E') {
+                    const frog = document.createElement('div');
+                    frog.className = `frog-transition w-10 h-10 md:w-16 md:h-16 flex items-center justify-center text-3xl md:text-5xl cursor-pointer select-none hover:scale-110 active:scale-90`;
+                    frog.innerHTML = '🐸';
+                    
+                    if (cell === 'G') {
+                        frog.classList.add('frog-green');
+                        frog.title = "Rana Verde (Derecha)";
+                    } else {
+                        frog.classList.add('frog-brown');
+                        frog.title = "Rana Café (Izquierda)";
+                    }
+
+                    frog.onclick = () => attemptMove(index);
+                    slot.appendChild(frog);
+                }
+                
+                boardEl.appendChild(slot);
+            });
+
+            moveCounterEl.innerText = moves;
+            checkGameState();
+        }
+
+        /**
+         * Intenta realizar un movimiento basado en las reglas del juego
+         * @param {number} index - Posición de la pieza que se desea mover
+         */
+        function attemptMove(index) {
+            const piece = gameState[index];
+            const emptyIdx = gameState.indexOf('E');
+            let success = false;
+
+            if (piece === 'G') {
+                // Verde: puede mover a +1 o saltar a +2
+                if (emptyIdx === index + 1 || (emptyIdx === index + 2 && gameState[index + 1] === 'B')) {
+                    executeSwap(index, emptyIdx);
+                    success = true;
+                }
+            } else if (piece === 'B') {
+                // Café: puede mover a -1 o saltar a -2
+                if (emptyIdx === index - 1 || (emptyIdx === index - 2 && gameState[index - 1] === 'G')) {
+                    executeSwap(index, emptyIdx);
+                    success = true;
+                }
+            }
+
+            if (!success) {
+                flashError("Movimiento inválido según las reglas.");
+            }
+        }
+
+        /**
+         * Intercambia las posiciones en el arreglo de estado
+         */
+        function executeSwap(from, to) {
+            const temp = gameState[from];
+            gameState[from] = gameState[to];
+            gameState[to] = temp;
+            moves++;
+            renderBoard();
+        }
+
+        /**
+         * Verifica si el usuario ha ganado o si ha quedado bloqueado
+         */
+        function checkGameState() {
+            // Verificar Victoria
+            if (JSON.stringify(gameState) === JSON.stringify(winState)) {
+                setTimeout(() => {
+                    victoryModal.classList.remove('hidden');
+                }, 400);
+                return;
+            }
+
+            // Verificar Bloqueo (Deadlock)
+            if (!canMoveAny()) {
+                statusMsgEl.innerText = "SISTEMA BLOQUEADO: No hay movimientos posibles.";
+                statusMsgEl.classList.add('text-red-500');
+            } else {
+                statusMsgEl.classList.remove('text-red-500');
+            }
+        }
+
+        /**
+         * Evalúa si existe al menos un movimiento legal en el tablero actual
+         */
+        function canMoveAny() {
+            const emptyIdx = gameState.indexOf('E');
+            for (let i = 0; i < gameState.length; i++) {
+                if (gameState[i] === 'G') {
+                    if (emptyIdx === i + 1 || (emptyIdx === i + 2 && gameState[i + 1] === 'B')) return true;
+                } else if (gameState[i] === 'B') {
+                    if (emptyIdx === i - 1 || (emptyIdx === i - 2 && gameState[i - 1] === 'G')) return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Reinicia el estado a los valores por defecto
+         */
+        function resetGame() {
+            gameState = ['G', 'G', 'G', 'E', 'B', 'B', 'B'];
+            moves = 0;
+            statusMsgEl.innerText = "";
+            victoryModal.classList.add('hidden');
+            renderBoard();
+        }
+
+        /**
+         * Muestra un mensaje temporal de error
+         */
+        function flashError(msg) {
+            statusMsgEl.innerText = msg;
+            setTimeout(() => {
+                if (statusMsgEl.innerText === msg) statusMsgEl.innerText = "";
+            }, 2000);
+        }
+
+        // Inicio de la aplicación
+        window.onload = renderBoard;
+    </script>
+</body>
+</html>
